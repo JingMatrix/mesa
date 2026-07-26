@@ -272,9 +272,19 @@ radv_cs_emit_cache_flush(struct radeon_winsys *ws, struct radv_cmd_stream *cs, e
                           S_0085F0_CB6_DEST_BASE_ENA(1) | S_0085F0_CB7_DEST_BASE_ENA(1);
 
          /* Necessary for DCC */
-         if (gfx_level >= GFX8) {
+         if (gfx_level == GFX8) {
+            /* Wait for the timestamp to land before letting the CP run ahead.
+             * GFX9 got this in c2fbeb7ca05f ("radv: add GFX9 cache flushing
+             * support"); GFX8 kept the fire-and-forget variant and hangs the
+             * graphics ring if a CB write is still in flight.
+             */
+            assert(flush_cnt);
+            (*flush_cnt)++;
+
             radv_cs_emit_write_event_eop(cs, gfx_level, V_028A90_FLUSH_AND_INV_CB_DATA_TS, 0, EOP_DST_SEL_MEM,
-                                         EOP_INT_SEL_NONE, EOP_DATA_SEL_DISCARD, 0, 0, gfx9_eop_bug_va);
+                                         EOP_INT_SEL_SEND_DATA_AFTER_WR_CONFIRM, EOP_DATA_SEL_VALUE_32BIT,
+                                         flush_va, *flush_cnt, gfx9_eop_bug_va);
+            radv_cp_wait_mem(cs, WAIT_REG_MEM_EQUAL, flush_va, *flush_cnt, 0xffffffff);
          }
 
          *sqtt_flush_bits |= RGP_FLUSH_FLUSH_CB | RGP_FLUSH_INVAL_CB;
