@@ -7876,7 +7876,7 @@ radv_BeginCommandBuffer(VkCommandBuffer commandBuffer, const VkCommandBufferBegi
       cmd_buffer->state.cond_render.mec_inv_pred_va = radv_buffer_get_va(cmd_buffer->upload.upload_bo) + pred_offset;
    }
 
-   if (pdev->info.gfx_level >= GFX9 && cmd_buffer->qf == RADV_QUEUE_GENERAL) {
+   if (pdev->info.gfx_level >= GFX8 && cmd_buffer->qf == RADV_QUEUE_GENERAL) {
       unsigned num_db = pdev->info.max_render_backends;
       bool is_secure = cmd_buffer->vk.pool->flags & VK_COMMAND_POOL_CREATE_PROTECTED_BIT;
       if (!is_secure) {
